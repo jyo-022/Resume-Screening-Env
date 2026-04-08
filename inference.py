@@ -160,6 +160,14 @@ def run_task(task_name):
 
 # ── Main ───────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    for task in ["easy", "medium", "hard"]:
-        run_task(task)
-        print(flush=True)
+    try:
+        for task in ["easy", "medium", "hard"]:
+            run_task(task)
+            print(flush=True)
+
+    except Exception as e:
+        print(f"[FATAL] error={str(e)[:100]}", flush=True)
+
+    finally:
+        import sys
+        sys.exit(0)
