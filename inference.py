@@ -95,7 +95,6 @@ def run_task(task_name):
     print(f"[START] task={task_name} env={ENV_NAME} model={MODEL_NAME}", flush=True)
 
     try:
-        # single-step (safe)
         while not done and step_count < 1:
             step_count += 1
             prompt = build_prompt(obs)
@@ -114,7 +113,15 @@ def run_task(task_name):
                 action = Action(ranked_candidates=list(all_ids))
                 last_error = str(e).replace("\n", " ")[:100]
 
-            obs, reward, done, info = env.step(action)
+            # SAFE ENV STEP
+            try:
+                obs, reward, done, info = env.step(action)
+            except Exception as e:
+                reward = type("obj", (), {"score": 0.0})()
+                done = True
+                info = {}
+                last_error = f"env_error: {str(e)[:100]}"
+
             rewards.append(reward.score)
 
             print(
@@ -145,7 +152,6 @@ def run_task(task_name):
             f"steps={step_count} rewards={rewards_str}",
             flush=True
         )
-
 
 # ── Main ───────────────────────────────────────────────────────────
 if __name__ == "__main__":
