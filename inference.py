@@ -14,7 +14,7 @@ client   = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
 ENV_NAME = "resume-screening"
 
 
-# ── Optional Health Server (disabled for validator) ────────────────
+# ──  Health Server ────────────────
 def start_health_server():
     from fastapi import FastAPI
     import uvicorn
@@ -25,16 +25,7 @@ def start_health_server():
     def health():
         return {"status": "ok", "env": ENV_NAME}
 
-    try:
-        uvicorn.run(app, host="0.0.0.0", port=7860, log_level="error")
-    except Exception:
-        pass
-
-
-# Only run server if explicitly enabled
-if os.getenv("RUN_SERVER") == "true":
-    threading.Thread(target=start_health_server, daemon=True).start()
-
+    uvicorn.run(app, host="0.0.0.0", port=7860)
 
 # ── Prompt builder ─────────────────────────────────────────────────
 def build_prompt(observation):
@@ -80,8 +71,15 @@ def parse_action(text, all_ids):
         ranked  = data.get("ranked_candidates", [])
         flagged = data.get("flagged_candidates", [])
 
-        valid_ranked = [c for c in ranked if c in all_ids]
-        missing = [c for c in all_ids if c not in valid_ranked]
+        seen = set()
+        valid_ranked = []
+
+        for c in ranked:
+            if c in all_ids and c not in seen:
+                valid_ranked.append(c)
+                seen.add(c)
+
+        missing = [c for c in all_ids if c not in seen]
         valid_ranked.extend(missing)
 
         valid_flagged = [c for c in flagged if c in valid_ranked]
@@ -168,3 +166,6 @@ if __name__ == "__main__":
     for task in ["easy", "medium", "hard"]:
         run_task(task)
         print(flush=True)
+
+    # start server 
+    start_health_server()
