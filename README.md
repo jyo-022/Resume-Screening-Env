@@ -184,6 +184,6 @@ resume-screening-env/
 ## Output Format
 ```
 [START] task=easy env=resume-screening model=Qwen/Qwen2.5-7B-Instruct
-[STEP] step=1 action=['c01','c02',...] reward=0.82 done=true error=null
-[END] success=true steps=1 rewards=0.82
+[STEP] step=1 action=rank(10_candidates) reward=0.72 done=true error=null
+[END] success=true steps=1 rewards=0.72
 ```
