@@ -205,5 +205,5 @@ if __name__ == "__main__":
         run_task(task)
         print(flush=True)
 
-    # start server 
-    start_health_server()
+    if os.getenv("SPACE_ID"):   
+        start_health_server()
