@@ -1,0 +1,103 @@
+from env.tasks import load_easy_task, load_medium_task, load_hard_task
+from env.reward import compute_final_reward
+from models.observation import Observation
+from models.action import Action
+from models.reward import Reward
+from env.grader import compute_ground_truth_scores, rank_candidates, compute_rank_correlation
+
+
+class ResumeScreeningEnv:
+    def __init__(self, task="easy"):
+        self.task = task
+        self.current_step = 0
+        self.done = False
+        self.history = []  # stores previous actions and rewards
+
+        if task == "easy":
+            self.max_steps = 3
+            self.job, self.candidates = load_easy_task()
+        elif task == "medium":
+            self.max_steps = 3
+            self.job, self.candidates = load_medium_task()
+        elif task == "hard":
+            self.max_steps = 3
+            self.job, self.candidates = load_hard_task()
+        else:
+            raise ValueError("Invalid task type")
+
+        # compute ground truth once at init
+        self.gt_scores = compute_ground_truth_scores(self.job, self.candidates)
+        self.gt_ranking = rank_candidates(self.gt_scores)
+
+    def reset(self):
+        self.current_step = 0
+        self.done = False
+        self.history = []
+
+        return Observation(
+            job_description=self.job,
+            candidates=self.candidates,
+            step=self.current_step,
+            history=[]
+        )
+
+    def step(self, action: Action):
+        self.current_step += 1
+        candidate_ids = [c["candidate_id"] for c in self.candidates]
+
+        # validate
+        if set(action.ranked_candidates) != set(candidate_ids):
+            reward = Reward(score=0.0)
+            self.done = True
+            return self._obs(), reward, self.done, {"error": "Invalid ranking"}
+
+        # base rank correlation
+        base_score = compute_rank_correlation(action.ranked_candidates, self.gt_ranking)
+
+        # step-aware reward shaping
+        final_score = compute_final_reward(
+            base_score=base_score,
+            predicted=action.ranked_candidates,
+            ground_truth=self.gt_ranking,
+            flagged=action.flagged_candidates,
+            gt_scores=self.gt_scores,
+            task=self.task,
+            step=self.current_step,
+            max_steps=self.max_steps,
+            history=self.history
+        )
+
+        reward = Reward(score=float(final_score))
+
+        # store in history
+        self.history.append({
+            "step": self.current_step,
+            "ranked_candidates": action.ranked_candidates,
+            "score": float(final_score)
+        })
+
+        # done after max_steps
+        self.done = self.current_step >= self.max_steps
+
+        return self._obs(), reward, self.done, {}
+
+    def _obs(self):
+        return Observation(
+            job_description=self.job,
+            candidates=self.candidates,
+            step=self.current_step,
+            history=self.history
+        )
+
+    def state(self):
+        return {
+            "task": self.task,
+            "step": self.current_step,
+            "done": self.done,
+            "max_steps": self.max_steps,
+            "num_candidates": len(self.candidates),
+            "history": self.history
+        }
+
+    def close(self):
+        pass

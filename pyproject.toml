@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "resume-screening-env"
+version = "1.0.0"
+description = "A real-world RL environment for resume screening and candidate ranking"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0",
+    "openai>=1.0",
+    "openenv",
+    "pyyaml",
+    "fastapi",
+    "uvicorn",
+]
+
+[project.scripts]
+server = "server.app:main"
+
+[project.entry-points."openenv.envs"]
+resume-screening-env = "env.environment:ResumeScreeningEnv"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["env*", "models*", "data*", "server*"]

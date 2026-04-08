@@ -1,0 +1,41 @@
+id: resume-screening-env
+name: Resume Screening Environment
+version: "1.0"
+description: >
+  A real-world environment simulating resume screening and candidate ranking
+  based on job descriptions. Implements multi-step deliberation across
+  easy (10 candidates), medium (25), and hard (50) tasks.
+
+tags:
+  - openenv
+  - resume-screening
+
+entry_point: env.environment:ResumeScreeningEnv
+
+tasks:
+  - name: easy
+    description: Rank 10 candidates for a junior Python developer role.
+    difficulty: easy
+    max_steps: 3
+  - name: medium
+    description: Rank 25 candidates with weighted skills and transferable equivalences.
+    difficulty: medium
+    max_steps: 3
+  - name: hard
+    description: Rank 50 candidates and flag borderline cases for a senior ML role.
+    difficulty: hard
+    max_steps: 3
+
+observation_space:
+  type: dict
+  description: Job description, candidates list, step count, and action history
+
+action_space:
+  type: dict
+  description: Ranked candidate IDs and optional flagged uncertain candidates
+
+reward:
+  type: float
+  min: 0.0
+  max: 1.0
+  description: Spearman rank correlation with step-aware shaping bonuses and penalties

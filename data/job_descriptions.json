@@ -1,0 +1,46 @@
+[
+  {
+  "job_id": "job_easy",
+  "role": "Junior Python Developer",
+  "must_have": [
+    {"skill": "Python", "weight": 3},
+    {"skill": "Data Structures", "weight": 2},
+    {"skill": "Git", "weight": 2},
+    {"skill": "SQL", "weight": 2},
+    {"skill": "REST APIs", "weight": 1}
+  ],
+  "nice_to_have": [
+    {"skill": "Docker", "weight": 1}
+  ],
+  "min_experience": 1
+},
+  {
+    "job_id": "job_medium",
+    "role": "Machine Learning Engineer",
+    "must_have": [
+      {"skill": "Python", "weight": 3},
+      {"skill": "Machine Learning", "weight": 3},
+      {"skill": "Data Structures", "weight": 2}
+    ],
+    "nice_to_have": [
+      {"skill": "Docker", "weight": 1},
+      {"skill": "AWS", "weight": 1}
+    ],
+    "min_experience": 2
+  },
+  {
+    "job_id": "job_hard",
+    "role": "Senior ML Architect",
+    "must_have": [
+      {"skill": "Python", "weight": 3},
+      {"skill": "Machine Learning", "weight": 3},
+      {"skill": "Data Structures", "weight": 2},
+      {"skill": "System Design", "weight": 3}
+    ],
+    "nice_to_have": [
+      {"skill": "Docker", "weight": 1},
+      {"skill": "AWS", "weight": 2}
+    ],
+    "min_experience": 4
+  }
+]
