@@ -5,6 +5,11 @@ from openai import OpenAI
 from env.environment import ResumeScreeningEnv
 from models.action import Action
 
+if os.getenv("ALREADY_RUN"):
+    exit(0)
+
+os.environ["ALREADY_RUN"] = "1"
+
 # ── Environment variables ──────────────────────────────────────────
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME   = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct")
