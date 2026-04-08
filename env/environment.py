@@ -5,27 +5,26 @@ from models.action import Action
 from models.reward import Reward
 from env.grader import compute_ground_truth_scores, rank_candidates, compute_rank_correlation
 
-
 class ResumeScreeningEnv:
     def __init__(self, task="easy"):
         self.task = task
         self.current_step = 0
         self.done = False
-        self.history = []  # stores previous actions and rewards
+        self.history = []
 
+        # SINGLE STEP FOR ALL TASKS (PHASE 2)
+        self.max_steps = 1
+        
         if task == "easy":
-            self.max_steps = 3
             self.job, self.candidates = load_easy_task()
         elif task == "medium":
-            self.max_steps = 3
             self.job, self.candidates = load_medium_task()
         elif task == "hard":
-            self.max_steps = 3
             self.job, self.candidates = load_hard_task()
         else:
             raise ValueError("Invalid task type")
 
-        # compute ground truth once at init
+        # Ground truth
         self.gt_scores = compute_ground_truth_scores(self.job, self.candidates)
         self.gt_ranking = rank_candidates(self.gt_scores)
 
@@ -33,7 +32,6 @@ class ResumeScreeningEnv:
         self.current_step = 0
         self.done = False
         self.history = []
-
         return Observation(
             job_description=self.job,
             candidates=self.candidates,
@@ -42,19 +40,32 @@ class ResumeScreeningEnv:
         )
 
     def step(self, action: Action):
-        self.current_step += 1
+        self.current_step = 1
+        
         candidate_ids = [c["candidate_id"] for c in self.candidates]
+        n_expected = len(candidate_ids)
 
-        # validate
-        if set(action.ranked_candidates) != set(candidate_ids):
-            reward = Reward(score=0.0)
-            self.done = True
-            return self._obs(), reward, self.done, {"error": "Invalid ranking"}
+        # LEN CHECK FIRST (Hard task fix)
+        if len(action.ranked_candidates) != n_expected:
+            score = 0.0
+            error = f"Wrong length: got {len(action.ranked_candidates)}, expected {n_expected}"
+            reward = Reward(score=score)
+            return self._obs(), reward, True, {"error": error}
 
-        # base rank correlation
+        # SET VALIDATION (relaxed - partial credit)
+        ranked_set = set(action.ranked_candidates)
+        expected_set = set(candidate_ids)
+        missing = expected_set - ranked_set
+        extra = ranked_set - expected_set
+        
+        if missing or extra:
+            score = 0.1  # Partial credit
+            error = f"Missing {len(missing)}, extra {len(extra)}"
+            reward = Reward(score=score)
+            return self._obs(), reward, True, {"error": error}
+
+        # FULL SCORING (perfect ranking)
         base_score = compute_rank_correlation(action.ranked_candidates, self.gt_ranking)
-
-        # step-aware reward shaping
         final_score = compute_final_reward(
             base_score=base_score,
             predicted=action.ranked_candidates,
@@ -62,24 +73,21 @@ class ResumeScreeningEnv:
             flagged=action.flagged_candidates,
             gt_scores=self.gt_scores,
             task=self.task,
-            step=self.current_step,
-            max_steps=self.max_steps,
+            step=1,
+            max_steps=1,
             history=self.history
         )
 
         reward = Reward(score=float(final_score))
-
-        # store in history
+        self.done = True
+        
         self.history.append({
-            "step": self.current_step,
+            "step": 1,
             "ranked_candidates": action.ranked_candidates,
             "score": float(final_score)
         })
 
-        # done after max_steps
-        self.done = self.current_step >= self.max_steps
-
-        return self._obs(), reward, self.done, {}
+        return self._obs(), reward, True, {"error": "null"}
 
     def _obs(self):
         return Observation(
