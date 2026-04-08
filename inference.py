@@ -5,7 +5,7 @@ from openai import OpenAI
 from env.environment import ResumeScreeningEnv
 from models.action import Action
 
-if os.getenv("ALREADY_RUN"):
+if os.getenv("ALREADY_RUN") == "1":
     exit(0)
 
 os.environ["ALREADY_RUN"] = "1"
