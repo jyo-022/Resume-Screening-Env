@@ -13,58 +13,6 @@ HF_TOKEN     = os.getenv("HF_TOKEN", "")   # SAFE fallback
 client   = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
 ENV_NAME = "resume-screening"
 
-
-# ──  Health Server ────────────────
-def start_health_server():
-    from fastapi import FastAPI
-    from pydantic import BaseModel
-    import uvicorn
-
-    app = FastAPI()
-    env_store = {}
-
-    class TaskRequest(BaseModel):
-        task: str = "easy"
-
-    @app.get("/")
-    def health():
-        return {"status": "ok", "env": ENV_NAME}
-
-    @app.post("/reset")
-    def reset(req: TaskRequest = None):
-        task = req.task if req else "easy"
-        env = ResumeScreeningEnv(task=task)
-        obs = env.reset()
-        env_store["env"] = env
-
-        return {
-            "job_description": obs.job_description,
-            "candidates": obs.candidates,
-            "step": obs.step,
-        }
-
-    @app.post("/step")
-    def step(action: Action):
-        env = env_store.get("env")
-
-        if not env:
-            return {"error": "call /reset first"}
-
-        obs, reward, done, info = env.step(action)
-
-        return {
-            "observation": {
-                "job_description": obs.job_description,
-                "candidates": obs.candidates,
-                "step": obs.step,
-            },
-            "reward": reward.score,
-            "done": done,
-            "info": info,
-        }
-
-    uvicorn.run(app, host="0.0.0.0", port=7860)
-
 # ── Prompt builder ─────────────────────────────────────────────────
 def build_prompt(observation):
     job  = observation.job_description
@@ -204,6 +152,3 @@ if __name__ == "__main__":
     for task in ["easy", "medium", "hard"]:
         run_task(task)
         print(flush=True)
-
-    if os.getenv("SPACE_ID"):   
-        start_health_server()
