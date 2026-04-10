@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=61.0"]
-build-backend = "setuptools.backends.legacy:build"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "resume-screening-env"
@@ -8,12 +8,18 @@ version = "1.0.0"
 description = "A real-world RL environment for resume screening and candidate ranking"
 requires-python = ">=3.10"
 dependencies = [
-    "pydantic>=2.0",
-    "openai>=1.0",
+    "fastapi==0.104.1",
+    "uvicorn==0.24.0",
+    "pydantic==2.5.0",
+    "openai==1.52.0",
+    "httpx==0.27.2",
+    "requests==2.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
     "openenv",
-    "pyyaml",
-    "fastapi",
-    "uvicorn",
 ]
 
 [project.scripts]
