@@ -52,4 +52,9 @@ def compute_final_reward(base_score, predicted, ground_truth,
             if len(wrong_flags) > 3:
                 reward -= 0.05
 
-    return max(0.0, min(1.0, reward))
+    # ── CRITICAL: Clamp to strictly (0, 1) exclusive range ─────────
+    # Validator requires scores strictly between 0 and 1 (not inclusive)
+    epsilon = 1e-6
+    reward = max(epsilon, min(1.0 - epsilon, reward))
+    
+    return reward

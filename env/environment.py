@@ -45,9 +45,12 @@ class ResumeScreeningEnv:
         candidate_ids = [c["candidate_id"] for c in self.candidates]
         n_expected = len(candidate_ids)
 
+        # Epsilon for strict (0, 1) range
+        epsilon = 1e-6
+
         # LEN CHECK FIRST (Hard task fix)
         if len(action.ranked_candidates) != n_expected:
-            score = 0.0
+            score = 0.1  # Changed from 0.0 to strictly > 0
             error = f"Wrong length: got {len(action.ranked_candidates)}, expected {n_expected}"
             reward = Reward(score=score)
             return self._obs(), reward, True, {"error": error}
@@ -59,7 +62,7 @@ class ResumeScreeningEnv:
         extra = ranked_set - expected_set
         
         if missing or extra:
-            score = 0.1  # Partial credit
+            score = 0.15  # Partial credit, strictly > 0
             error = f"Missing {len(missing)}, extra {len(extra)}"
             reward = Reward(score=score)
             return self._obs(), reward, True, {"error": error}
@@ -77,6 +80,9 @@ class ResumeScreeningEnv:
             max_steps=1,
             history=self.history
         )
+
+        # CRITICAL: Ensure score is strictly in (0, 1) range
+        final_score = max(epsilon, min(1.0 - epsilon, float(final_score)))
 
         reward = Reward(score=float(final_score))
         self.done = True
