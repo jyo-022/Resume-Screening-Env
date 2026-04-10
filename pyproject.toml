@@ -14,12 +14,12 @@ dependencies = [
     "openai==1.52.0",
     "httpx==0.27.2",
     "requests==2.31.0",
+    "openenv>=0.1.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest",
-    "openenv",
 ]
 
 [project.scripts]
