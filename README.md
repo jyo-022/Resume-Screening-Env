@@ -126,11 +126,11 @@ the ground truth ranking for a given job and candidate set.
  
 ## Baseline Performance (Qwen/Qwen2.5-7B-Instruct via Hugging Face)
  
-| Task   | Expected Reward Range |
-|--------|--------|
-| easy   | 0.85 – 0.95 |
-| medium | 0.80 – 0.90 |
-| hard   | 0.75 – 0.85 |
+| Task   | Baseline Score Range |
+|--------|---------------------|
+| easy   | 0.82 – 0.86         |
+| medium | 0.68 – 0.72         |
+| hard   | 0.59 – 0.63         |
  
 *Note: The agent uses a hybrid approach combining deterministic scoring with LLM verification.*
  
