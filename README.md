@@ -253,15 +253,15 @@ This hybrid approach achieves high scores (0.80-0.95 range) while remaining robu
 ```
 [START] task=easy env=resume-screening model=Qwen/Qwen2.5-7B-Instruct
 [STEP] step=1 action=rank(10_candidates) reward=0.82 done=true error=null
-[END] success=true steps=1 rewards=0.82
- 
+[END] success=true steps=1 score=0.82 rewards=0.82
+
 [START] task=medium env=resume-screening model=Qwen/Qwen2.5-7B-Instruct
-[STEP] step=1 action=rank(25_candidates) reward=0.65 done=true error=null
-[END] success=true steps=1 rewards=0.65
- 
+[STEP] step=1 action=rank(25_candidates) reward=0.72 done=true error=null
+[END] success=true steps=1 score=0.72 rewards=0.72
+
 [START] task=hard env=resume-screening model=Qwen/Qwen2.5-7B-Instruct
-[STEP] step=1 action=rank(50_candidates) reward=0.42 done=true error=null
-[END] success=false steps=1 rewards=0.42
+[STEP] step=1 action=rank(50_candidates) reward=0.56 done=true error=null
+[END] success=true steps=1 score=0.56 rewards=0.56
 ```
  
 ---
