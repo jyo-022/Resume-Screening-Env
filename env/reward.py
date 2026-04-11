@@ -1,39 +1,48 @@
+def clamp_validator_score(x: float) -> float:
+    """Clamp to (0.01, 0.99) so :.2f never prints 0.00 or 1.00."""
+    x = float(x)
+    if x >= 0.995:
+        return 0.99
+    if x <= 0.005:
+        return 0.01
+    return round(x, 2)
+
+
 def compute_final_reward(base_score, predicted, ground_truth,
                          flagged=None, gt_scores=None, task="easy",
                          step=1, max_steps=3, history=None):
+    """
+    Compute final reward from base Spearman correlation score.
+    base_score is already clamped to (0.01, 0.90) by grader.py.
+    All bonuses/penalties are deterministic (no random).
+    """
+    reward = float(base_score)
 
-    reward = max(0.0, min(1.0, base_score))
-
-    # ── Step-based shaping ─────────────────────────────────────────
-    # Early steps: reward partial progress, be lenient on penalties
-    # Final step: full penalties apply
     is_final_step = (step >= max_steps)
 
-    # Reward improvement over previous step
+    # ── Step improvement bonus ─────────────────────────────────────
     if history and len(history) > 0:
         prev_score = history[-1]["score"]
         improvement = reward - prev_score
         if improvement > 0:
-            # bonus for getting better each step
-            reward += 0.05
+            reward += 0.03
         elif improvement < -0.05:
-            # penalty for getting significantly worse
-            reward -= 0.05
+            reward -= 0.03
 
-    # ── Ranking quality penalties (full weight only on final step) ─
+    # ── Ranking quality penalties ──────────────────────────────────
     penalty_weight = 1.0 if is_final_step else 0.5
 
     if predicted[0] != ground_truth[0]:
-        reward -= 0.2 * penalty_weight
+        reward -= 0.05 * penalty_weight
 
     if ground_truth[0] not in predicted[:3]:
-        reward -= 0.2 * penalty_weight
+        reward -= 0.05 * penalty_weight
 
-    # ── Top-5 overlap bonus ────────────────────────────────────────
+    # ── Top-5 overlap bonus (up to +0.05) ─────────────────────────
     predicted_top5 = set(predicted[:5])
     gt_top5 = set(ground_truth[:5])
     overlap = len(predicted_top5 & gt_top5)
-    reward += overlap * 0.02  # up to +0.10 bonus for top-5 matches
+    reward += overlap * 0.01
 
     # ── Hard task: flagging quality ────────────────────────────────
     if task == "hard" and flagged is not None and gt_scores is not None:
@@ -47,14 +56,18 @@ def compute_final_reward(base_score, predicted, ground_truth,
             flag_recall = correctly_flagged / len(true_borderline)
 
             if flag_precision > 0.5 and flag_recall > 0.5:
-                reward += 0.1
+                reward += 0.05
             wrong_flags = flagged_set - true_borderline
             if len(wrong_flags) > 3:
-                reward -= 0.05
+                reward -= 0.03
 
-    # ── CRITICAL: Clamp to strictly (0, 1) exclusive range ─────────
-    # Validator requires scores strictly between 0 and 1 (not inclusive)
-    epsilon = 1e-6
-    reward = max(epsilon, min(1.0 - epsilon, reward))
-    
-    return reward
+    # ── Deterministic task difficulty offsets ─────────────────────
+    if task == "easy":
+        reward -= 0.02
+    elif task == "medium":
+        reward -= 0.05
+    elif task == "hard":
+        reward -= 0.10
+
+    # ── Display-safe clamp: :.2f will never print 0.00 or 1.00 ────
+    return clamp_validator_score(reward)
